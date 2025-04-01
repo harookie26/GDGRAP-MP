@@ -11,14 +11,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-/*
-
-
-FFFFIIX THE CONTROLS OF THIS PROJECT lord
-
-
-
-*/
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
@@ -53,6 +45,36 @@ float car_pos_x = 0.0f;
 float car_pos_y = 0.0f;
 float car_pos_z = 0.0f;
 
+float lastX = 300, lastY = 300; // Initial mouse position
+float yaw = -90.0f, pitch = 0.0f; // Initial orientation
+bool firstMouse = true;
+
+void Mouse_Callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // Reversed since y-coordinates go from bottom to top
+    lastX = xpos;
+    lastY = ypos;
+
+    float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw += xoffset;
+    pitch += yoffset;
+
+    if (pitch > 89.0f)
+        pitch = 89.0f;
+    if (pitch < -89.0f)
+        pitch = -89.0f;
+}
 
 void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
@@ -77,143 +99,11 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
         {
             car_pos_x += 0.1f;
         }
-
     }
 
-    if (key == GLFW_KEY_N)
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
-        z_mod += 0.2f;
-    }
-
-    if (key == GLFW_KEY_M)
-    {
-        z_mod -= 0.2f;
-    }
-
-    if (key == GLFW_KEY_U)
-    {
-        y_mod += 0.1f;
-        x_mod -= 0.1f;
-    }
-
-    if (key == GLFW_KEY_J)
-    {
-        y_mod += 0.1f;
-        x_mod += 0.1f;
-    }
-
-    if (key == GLFW_KEY_Z)
-    {
-        y_mod -= 0.1f;
-        x_mod -= 0.1f;
-    }
-
-    if (key == GLFW_KEY_C)
-    {
-        y_mod -= 0.1f;
-        x_mod += 0.1f;
-    }
-
-    if (key == GLFW_KEY_RIGHT)
-    {
-        theta_mod_y += 10.f;
-    }
-
-    if (key == GLFW_KEY_LEFT)
-    {
-        theta_mod_y -= 10.f;
-    }
-
-    if (key == GLFW_KEY_DOWN)
-    {
-        theta_mod_x += 10.f;
-    }
-
-    if (key == GLFW_KEY_UP)
-    {
-        theta_mod_x -= 10.f;
-    }
-
-    if (key == GLFW_KEY_I)
-    {
-        theta_mod_z += 10.f;
-    }
-
-    if (key == GLFW_KEY_K)
-    {
-        theta_mod_z -= 10.f;
-    }
-
-    if (key == GLFW_KEY_E)
-    {
-        scale_x += 0.1f;
-        scale_y += 0.1f;
-    }
-
-    if (key == GLFW_KEY_Q)
-    {
-        scale_x -= 0.1f;
-        scale_y -= 0.1f;
-    }
-
-    if (key == GLFW_KEY_V)
-    {
-        camera_mod_y += 0.1f;
-    }
-
-    if (key == GLFW_KEY_B)
-    {
-        camera_mod_y -= 0.1f;
-    }
-
-    if (key == GLFW_KEY_F)
-    {
-        camera_mod_x += 0.1f;
-    }
-
-    if (key == GLFW_KEY_G)
-    {
-        camera_mod_x -= 0.1f;
-    }
-
-    if (key == GLFW_KEY_1)
-    {
-        lightX -= 1.f;
-    }
-
-    if (key == GLFW_KEY_2)
-    {
-        lightY += 1.f;
-    }
-
-    if (key == GLFW_KEY_3)
-    {
-        lightY -= 1.f;
-    }
-
-    if (key == GLFW_KEY_4)
-    {
-        lightX += 1.f;
-    }
-
-    if (key == GLFW_KEY_5)
-    {
-        lightZ += 1.f;
-    }
-
-    if (key == GLFW_KEY_6)
-    {
-        lightZ -= 1.f;
-    }
-
-    if (key == GLFW_KEY_7)
-    {
-        brightness += 1.0f;
-    }
-
-    if (key == GLFW_KEY_8)
-    {
-        brightness -= 1.0f;
+        glfwSetWindowShouldClose(window, GLFW_TRUE); // Closes the window by pressing the Escape key
     }
 }
 
@@ -241,6 +131,10 @@ int main(void)
     //Initialize Glad
     gladLoadGL();
 
+    glfwSetKeyCallback(window, Key_Callback);
+    glfwSetCursorPosCallback(window, Mouse_Callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     GLfloat UV[]{
     0.f, 1.f,
     0.f, 0.f,
@@ -267,8 +161,6 @@ int main(void)
         0
     );
 
-
-    glfwSetKeyCallback(window, Key_Callback);
     //Vertex Shader
 
     std::fstream vertSrc("Shaders/Sam.vert");
@@ -435,8 +327,6 @@ int main(void)
 
     //end of skybox setup
 
-
-
     std::string path = "3D/Car.obj";
     std::vector<tinyobj::shape_t> shapes;
     std::vector < tinyobj::material_t> material;
@@ -489,7 +379,6 @@ int main(void)
             attributes.vertices[(vData3.vertex_index * 3) + 2]
         );
 
-
         //UV points
 
         glm::vec2 uv1 = glm::vec2(
@@ -512,9 +401,7 @@ int main(void)
         glm::vec2 deltaUV1 = uv2 - uv1;
         glm::vec2 deltaUV2 = uv3 - uv1;
 
-
         float r = 1.0f / ((deltaUV1.x * deltaUV2.y) - (deltaUV1.y - deltaUV2.x));
-
 
         //tangent and bitangent time
 
@@ -529,19 +416,7 @@ int main(void)
         bitangents.push_back(bitangent);
         bitangents.push_back(bitangent);
 
-
-
-
-
-
     }
-
-
-
-
-
-
-
 
     std::vector<GLfloat> fullVertexData;
 
@@ -563,7 +438,6 @@ int main(void)
         fullVertexData.push_back(attributes.texcoords[(vData.texcoord_index * 2)]);
         fullVertexData.push_back(attributes.texcoords[(vData.texcoord_index * 2) + 1]);
 
-
         ///tangetn bitangent
 
         fullVertexData.push_back(tangents[i].x);
@@ -573,9 +447,6 @@ int main(void)
         fullVertexData.push_back(bitangents[i].x);
         fullVertexData.push_back(bitangents[i].y);
         fullVertexData.push_back(bitangents[i].z);
-
-
-
     }
     GLfloat vertices[]
     {
@@ -647,7 +518,6 @@ int main(void)
     GLuint VAO, VBO, EBO, VBO_UV;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-
 
     //current VAO = null
     glBindVertexArray(VAO);
@@ -729,27 +599,22 @@ int main(void)
 
         glm::vec3 lightPos = glm::vec3(lightX, lightY, lightZ);
 
-       glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+        glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
         // (FOV, Aspect Ratio, zNear, zFar)
 
         // Position Matrix of Camera
-		glm::vec3 cameraPos = glm::vec3(car_pos_x, car_pos_y + 0.5f, car_pos_z + 1.5f); // Move camera above and behind the car
-        glm::mat4 cameraPosMatrix = glm::translate(glm::mat4(1.0f), cameraPos * -1.0f);
+        glm::vec3 cameraPos = glm::vec3(car_pos_x, car_pos_y + 0.5f, car_pos_z + 1.5f); // Move camera above and behind the car
 
-        // Orientation
+        // Calculate the new orientation
+        glm::vec3 front;
+        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.y = sin(glm::radians(pitch));
+        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front = glm::normalize(front);
+
+        glm::vec3 cameraCenter = cameraPos + front;
+
         glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)); // Pointing upwards
-        glm::vec3 cameraCenter = glm::vec3(car_pos_x, car_pos_y, car_pos_z); // Center of the car
-
-        // Forward
-        glm::vec3 F = cameraCenter - cameraPos;
-        F = glm::normalize(F);
-
-        // R = F x WorldUp
-        glm::vec3 R = glm::cross(F, worldUp);
-        // U = R x F
-        glm::vec3 U = glm::cross(R, F);
-
-        glm::mat4 cameraOrientation = glm::mat4(1.0f);
 
         glm::mat4 viewMatrix = glm::lookAt(cameraPos, cameraCenter, worldUp);
 
@@ -766,8 +631,6 @@ int main(void)
 
         unsigned int sky_viewLoc = glGetUniformLocation(skyboxShaderProg, "view");
         glUniformMatrix4fv(sky_viewLoc, 1, GL_FALSE, glm::value_ptr(sky_view));
-
-
 
         glBindVertexArray(skyboxVAO);
         glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
@@ -814,7 +677,6 @@ int main(void)
         GLuint tex0Address = glGetUniformLocation(shaderProg, "tex0");
         glUniform1i(tex0Address, 0);*/
 
-
         glActiveTexture(GL_TEXTURE0);
         GLuint tex0Address = glGetUniformLocation(shaderProg, "tex0");
         glBindTexture(GL_TEXTURE_2D, texture);
@@ -842,10 +704,8 @@ int main(void)
         GLuint lightColor2Address = glGetUniformLocation(shaderProg, "lightColor2"); //assigning color 2
         glUniform3fv(lightColor2Address, 1, glm::value_ptr(lightColor2));
 
-
         GLuint brightnessLoc = glGetUniformLocation(shaderProg, "brightness");
         glUniform1f(brightnessLoc, brightness);
-
 
         glUseProgram(shaderProg);
         glBindVertexArray(VAO);
