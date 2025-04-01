@@ -49,8 +49,37 @@ float axis_x = 0.0f;
 float axis_y = 1.0f;
 float axis_z = 0.0f;
 
+float car_pos_x = 0.0f;
+float car_pos_y = 0.0f;
+float car_pos_z = 0.0f;
+
+
 void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    if (action == GLFW_PRESS || action == GLFW_REPEAT)
+    {
+        if (key == GLFW_KEY_W)
+        {
+            car_pos_z -= 0.1f;
+        }
+
+        if (key == GLFW_KEY_S)
+        {
+            car_pos_z += 0.1f;
+        }
+
+        if (key == GLFW_KEY_A)
+        {
+            car_pos_x -= 0.1f;
+        }
+
+        if (key == GLFW_KEY_D)
+        {
+            car_pos_x += 0.1f;
+        }
+
+    }
+
     if (key == GLFW_KEY_N)
     {
         z_mod += 0.2f;
@@ -59,26 +88,6 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
     if (key == GLFW_KEY_M)
     {
         z_mod -= 0.2f;
-    }
-
-    if (key == GLFW_KEY_D)
-    {
-        x_mod += 0.1f;
-    }
-
-    if (key == GLFW_KEY_A)
-    {
-        x_mod -= 0.1f;
-    }
-
-    if (key == GLFW_KEY_W)
-    {
-        y_mod += 0.1f;
-    }
-
-    if (key == GLFW_KEY_S)
-    {
-        y_mod -= 0.1f;
     }
 
     if (key == GLFW_KEY_U)
@@ -724,12 +733,12 @@ int main(void)
         // (FOV, Aspect Ratio, zNear, zFar)
 
         // Position Matrix of Camera
-        glm::vec3 cameraPos = glm::vec3(0.0f + camera_mod_x, 0.0f, 1.5f); // Move camera closer to the model
+		glm::vec3 cameraPos = glm::vec3(car_pos_x, car_pos_y + 0.5f, car_pos_z + 1.5f); // Move camera above and behind the car
         glm::mat4 cameraPosMatrix = glm::translate(glm::mat4(1.0f), cameraPos * -1.0f);
 
         // Orientation
         glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)); // Pointing upwards
-        glm::vec3 cameraCenter = glm::vec3(0.0f + camera_mod_x, 0.0f + camera_mod_y, 0.0f); // Center of the model
+        glm::vec3 cameraCenter = glm::vec3(car_pos_x, car_pos_y, car_pos_z); // Center of the car
 
         // Forward
         glm::vec3 F = cameraCenter - cameraPos;
@@ -770,8 +779,8 @@ int main(void)
 
         glUseProgram(shaderProg);
 
-        // Render main model
-        glm::mat4 transformation_matrix = glm::translate(identity_matrix, glm::vec3(0.0f, -0.5f, 0.0f)); // Place model a bit below the view
+        /// Render main model (car)
+        glm::mat4 transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x, car_pos_y, car_pos_z)); // Use car's position
 
         transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
 
@@ -784,15 +793,14 @@ int main(void)
 
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
 
+        unsigned int transformLoc = glGetUniformLocation(shaderProg, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
 
         unsigned int viewLoc = glGetUniformLocation(shaderProg, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
         unsigned int projLoc = glGetUniformLocation(shaderProg, "projection");
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-        unsigned int transformLoc = glGetUniformLocation(shaderProg, "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
 
         unsigned int alphaLoc = glGetUniformLocation(shaderProg, "alpha");
         glUniform1f(alphaLoc, 1.0f); // Full opacity for the main model
@@ -879,6 +887,48 @@ int main(void)
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
         glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the right model
         glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 8);
+
+        /*
+         * To make the ghost cars follow along with the main car, comment the rendering above and uncomment this.
+         * I decided to comment this first so that the camera lock with the main car is visible to work.
+         *
+        // Render left ghost car
+        transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x - 0.5f, car_pos_y, car_pos_z)); // Place model to the left
+
+        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
+
+        // Rotate the model to look forward
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
+
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
+        glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the left model
+        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
+
+        // Render right ghost car
+        transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x + 0.5f, car_pos_y, car_pos_z)); // Place model to the right
+
+        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
+
+        // Rotate the model to look forward
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
+
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
+        glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the right model
+        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
+        */
+
 
     	glEnd();
 
