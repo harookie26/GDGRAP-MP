@@ -27,6 +27,7 @@ float brightness = 5.0f;
 
 float camera_mod_x = 0.0f;
 float camera_mod_y = 0.0f;
+float camera_mod_z = -1.f;
 
 float x_mod = 0.0f;
 float y_mod = 0.0f;
