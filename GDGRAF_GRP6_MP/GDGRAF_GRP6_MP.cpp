@@ -63,6 +63,8 @@ void Mouse_Callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
+    //
+
     float sensitivity = 0.1f;
     xoffset *= sensitivity;
     yoffset *= sensitivity;
@@ -83,22 +85,38 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
         if (key == GLFW_KEY_W)
         {
             car_pos_z -= 0.1f;
+			if (theta_mod_y > 0)
+				theta_mod_y -= 0.5f;
+			else if (theta_mod_y < 0)
+				theta_mod_y += 0.5f;
         }
 
         if (key == GLFW_KEY_S)
         {
             car_pos_z += 0.1f;
+            if (theta_mod_y > 0)
+                theta_mod_y -= 0.5f;
+            else if (theta_mod_y < 0)
+                theta_mod_y += 0.5f;
         }
 
-        if (key == GLFW_KEY_A)
+        if (key==GLFW_KEY_A)  // (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         {
             car_pos_x -= 0.1f;
+			car_pos_z -= 0.1f;
+            if (theta_mod_y < 10.f)
+                theta_mod_y += 1.f;
         }
 
         if (key == GLFW_KEY_D)
         {
             car_pos_x += 0.1f;
+            car_pos_z -= 0.1f;
+            if (theta_mod_y > -10.f)
+                theta_mod_y -= 1.f;
         }
+
+        //testing condition for ghost cars
     }
 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -659,6 +677,8 @@ int main(void)
         unsigned int transformLoc = glGetUniformLocation(shaderProg, "transform");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
 
+
+        //view and light
         unsigned int viewLoc = glGetUniformLocation(shaderProg, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
@@ -673,10 +693,7 @@ int main(void)
         GLuint lightColorAddress = glGetUniformLocation(shaderProg, "lightColor");
         glUniform3fv(lightColorAddress, 1, glm::value_ptr(lightColor));
 
-        /*glBindTexture(GL_TEXTURE_2D, texture);
-        GLuint tex0Address = glGetUniformLocation(shaderProg, "tex0");
-        glUniform1i(tex0Address, 0);*/
-
+        //textures and 
         glActiveTexture(GL_TEXTURE0);
         GLuint tex0Address = glGetUniformLocation(shaderProg, "tex0");
         glBindTexture(GL_TEXTURE_2D, texture);
@@ -728,7 +745,7 @@ int main(void)
 
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
         glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the left model
-        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 8);
+        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
 
         // Render right model
         transformation_matrix = glm::translate(identity_matrix, glm::vec3(0.5f, -0.5f, 0.0f)); // Place model to the right
@@ -746,13 +763,15 @@ int main(void)
 
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
         glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the right model
-        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 8);
+        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
 
         /*
+* 
          * To make the ghost cars follow along with the main car, comment the rendering above and uncomment this.
          * I decided to comment this first so that the camera lock with the main car is visible to work.
          *
         // Render left ghost car
+        if(state==1){
         transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x - 0.5f, car_pos_y, car_pos_z)); // Place model to the left
 
         transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
@@ -769,7 +788,7 @@ int main(void)
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
         glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the left model
         glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
-
+        }
         // Render right ghost car
         transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x + 0.5f, car_pos_y, car_pos_z)); // Place model to the right
 
