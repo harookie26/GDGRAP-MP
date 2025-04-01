@@ -428,7 +428,7 @@ int main(void)
 
 
 
-    std::string path = "3D/plane.obj";
+    std::string path = "3D/Car.obj";
     std::vector<tinyobj::shape_t> shapes;
     std::vector < tinyobj::material_t> material;
     std::string warning, error;
@@ -720,30 +720,28 @@ int main(void)
 
         glm::vec3 lightPos = glm::vec3(lightX, lightY, lightZ);
 
-        glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f + z_mod), windowHeight / windowWidth, 0.1f, 100.0f);
-        //(FOV, Aspect Ratio, zNear, zFar)    
+       glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
+        // (FOV, Aspect Ratio, zNear, zFar)
 
-        //Position Matrix of Camera
-        glm::vec3 cameraPos = glm::vec3(0.0f + camera_mod_x, 0.0f, 5.0f); //Eye of Camera
+        // Position Matrix of Camera
+        glm::vec3 cameraPos = glm::vec3(0.0f + camera_mod_x, 0.0f, 1.5f); // Move camera closer to the model
         glm::mat4 cameraPosMatrix = glm::translate(glm::mat4(1.0f), cameraPos * -1.0f);
 
-        //Orientation
-        glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)); //Pointing upwards
-        glm::vec3 cameraCenter = glm::vec3(0.0f + camera_mod_x, 3.0f + camera_mod_y, 0.0f); //A bit on top of the model
+        // Orientation
+        glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)); // Pointing upwards
+        glm::vec3 cameraCenter = glm::vec3(0.0f + camera_mod_x, 0.0f + camera_mod_y, 0.0f); // Center of the model
 
-        //Forward
+        // Forward
         glm::vec3 F = cameraCenter - cameraPos;
         F = glm::normalize(F);
 
-        //R = F x WorldUp
+        // R = F x WorldUp
         glm::vec3 R = glm::cross(F, worldUp);
-        //U = R x F
+        // U = R x F
         glm::vec3 U = glm::cross(R, F);
 
         glm::mat4 cameraOrientation = glm::mat4(1.0f);
 
-        cameraCenter.y = camera_mod_x;
-        cameraCenter.x = camera_mod_y;
         glm::mat4 viewMatrix = glm::lookAt(cameraPos, cameraCenter, worldUp);
 
 
@@ -772,9 +770,13 @@ int main(void)
 
         glUseProgram(shaderProg);
 
-        glm::mat4 transformation_matrix = glm::translate(identity_matrix, glm::vec3(x_mod, y_mod, z_mod));
+        // Render main model
+        glm::mat4 transformation_matrix = glm::translate(identity_matrix, glm::vec3(0.0f, -0.5f, 0.0f)); // Place model a bit below the view
 
-        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(scale_x, scale_y, scale_z));
+        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
+
+        // Rotate the model to look forward
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
 
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
 
@@ -782,17 +784,18 @@ int main(void)
 
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
 
+
         unsigned int viewLoc = glGetUniformLocation(shaderProg, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
 
         unsigned int projLoc = glGetUniformLocation(shaderProg, "projection");
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
 
-
         unsigned int transformLoc = glGetUniformLocation(shaderProg, "transform");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
 
-
+        unsigned int alphaLoc = glGetUniformLocation(shaderProg, "alpha");
+        glUniform1f(alphaLoc, 1.0f); // Full opacity for the main model
 
         GLuint lightAddress = glGetUniformLocation(shaderProg, "lightPos");
         glUniform3fv(lightAddress, 1, glm::value_ptr(lightPos));
@@ -836,15 +839,48 @@ int main(void)
         glUniform1f(brightnessLoc, brightness);
 
 
-
-
         glUseProgram(shaderProg);
         glBindVertexArray(VAO);
         //glDrawElements(GL_TRIANGLES, mesh_indices.size(), GL_UNSIGNED_INT, 0);
         glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
 
+        // Render left model
+        transformation_matrix = glm::translate(identity_matrix, glm::vec3(-0.5f, -0.5f, 0.0f)); // Place model to the left
 
-        glEnd();
+        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
+
+        // Rotate the model to look forward
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
+
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
+        glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the left model
+        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 8);
+
+        // Render right model
+        transformation_matrix = glm::translate(identity_matrix, glm::vec3(0.5f, -0.5f, 0.0f)); // Place model to the right
+
+        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
+
+        // Rotate the model to look forward
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
+
+        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
+
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
+        glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the right model
+        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 8);
+
+    	glEnd();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

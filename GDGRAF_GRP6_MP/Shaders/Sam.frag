@@ -20,6 +20,7 @@ uniform vec3 ambientColor;
 uniform vec3 cameraPos;
 uniform float specStr;
 uniform float specPhong;
+uniform float alpha;
 
 uniform float brightness; //declare a brightness parameter
 
@@ -55,5 +56,5 @@ discard;
 	float spec = pow(max(dot(reflectDir, viewDir), 0.1), specPhong);
 	vec3 specColor = spec * specStr * lightColor2 * attenuation; //multiply attenuation to specColor
 
-	FragColor = vec4(specColor + diffuse + ambientCol, 1.0) * texture(tex0, texCoord); //if need more lightsource make for loop for this line
+	FragColor = vec4(specColor + diffuse + ambientCol, alpha) * texture(tex0, texCoord); //if need more lightsource make for loop for this line
 }
