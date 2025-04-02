@@ -25,6 +25,8 @@ float x_mod = 0.0f;
 float y_mod = 0.0f;
 float z_mod = 3.0f;
 
+float speed = 0.0f;
+
 float scale_x = 1;
 float scale_y = 1;
 float scale_z = 1;
@@ -82,9 +84,15 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
     if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
+        if (speed > 1.0f)
+		{
+			speed = 1.0f;
+        }
         if (key == GLFW_KEY_W)
         {
-            car_pos_z -= 0.1f;
+            speed += 0.01f;
+
+            car_pos_z -= speed;
 			if (theta_mod_y > 0)
 				theta_mod_y -= 0.5f;
 			else if (theta_mod_y < 0)
@@ -93,7 +101,9 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
         if (key == GLFW_KEY_S)
         {
-            car_pos_z += 0.1f;
+            speed += 0.01f;
+
+            car_pos_z += speed;
             if (theta_mod_y > 0)
                 theta_mod_y -= 0.5f;
             else if (theta_mod_y < 0)
@@ -102,27 +112,42 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
         if (key==GLFW_KEY_A)  // (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         {
+            speed += 0.01f;
+
             car_pos_x -= 0.1f;
-			car_pos_z -= 0.1f;
+			car_pos_z -= speed;
             if (theta_mod_y < 10.f)
                 theta_mod_y += 1.f;
         }
 
         if (key == GLFW_KEY_D)
         {
+            speed += 0.01f;
+
             car_pos_x += 0.1f;
-            car_pos_z -= 0.1f;
+            car_pos_z -= speed;
             if (theta_mod_y > -10.f)
                 theta_mod_y -= 1.f;
         }
 
+      
+
+       
+        
         //testing condition for ghost cars
     }
+   
+    
+        
 
+    
+   
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE); // Closes the window by pressing the Escape key
     }
+    
+	
 }
 
 int main(void)
@@ -150,6 +175,7 @@ int main(void)
     gladLoadGL();
 
     glfwSetKeyCallback(window, Key_Callback);
+
     glfwSetCursorPosCallback(window, Mouse_Callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -280,7 +306,11 @@ int main(void)
         3,7,6,
         6,2,3
     };
+    /*
+    
+    SKYBOXES
 
+    */
     unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
     glGenVertexArrays(1, &skyboxVAO);
     glGenBuffers(1, &skyboxVBO);
@@ -328,12 +358,12 @@ int main(void)
         {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                 0,
-                GL_RGB,
+                GL_RGB,// change to RGB if jpg
                 width,
                 height,
                 0,
-                GL_RGB,
-                GL_UNSIGNED_BYTE,
+                GL_RGB, // change to RGB if jpg
+                GL_UNSIGNED_BYTE, 
                 data
             );
 
