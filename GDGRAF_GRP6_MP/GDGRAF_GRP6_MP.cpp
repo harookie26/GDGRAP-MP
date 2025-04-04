@@ -135,12 +135,13 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 theta_mod_y -= 1.f;
         }
 
+
         if (key == GLFW_KEY_Z && action == GLFW_PRESS)
         {
             useFrontCamera = !useFrontCamera;
         }
 
-        //testing condition for ghost cars
+
     }
    
     
