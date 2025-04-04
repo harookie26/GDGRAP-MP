@@ -89,7 +89,7 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 {
     if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
-        if (speed > 1.0f)
+        if (speed > 1.00f)
 		{
 			speed = 1.0f;
         }
@@ -134,7 +134,28 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
             if (theta_mod_y > -10.f)
                 theta_mod_y -= 1.f;
         }
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        {
+			if (speed > 0.0f)
+			{
+				speed -= 0.01f;
 
+                std::cout << speed<<"\n";
+                
+				car_pos_z -= speed;
+			}
+        }
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        {
+            if (speed > 0.0f)
+            {
+                speed -= 0.01f;
+
+                std::cout << speed << "\n";
+
+                car_pos_z += speed;
+            }
+        }
 
         if (key == GLFW_KEY_Z && action == GLFW_PRESS)
         {
@@ -144,7 +165,7 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
     }
    
-    
+	
         
 
     
