@@ -51,33 +51,38 @@ float lastX = 300, lastY = 300; // Initial mouse position
 float yaw = -90.0f, pitch = 0.0f; // Initial orientation
 bool firstMouse = true;
 
+// Add these global variables
+bool useFrontCamera = false;
+glm::vec3 frontCameraPos;
+
 void Mouse_Callback(GLFWwindow* window, double xpos, double ypos)
 {
-    if (firstMouse)
+    if (!useFrontCamera) // Only update orientation if rear camera is active
     {
+        if (firstMouse)
+        {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos; // Reversed since y-coordinates go from bottom to top
         lastX = xpos;
         lastY = ypos;
-        firstMouse = false;
+
+        float sensitivity = 0.1f;
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
+
+        yaw += xoffset;
+        pitch += yoffset;
+
+        if (pitch > 89.0f)
+            pitch = 89.0f;
+        if (pitch < -89.0f)
+            pitch = -89.0f;
     }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // Reversed since y-coordinates go from bottom to top
-    lastX = xpos;
-    lastY = ypos;
-
-    //
-
-    float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    yaw += xoffset;
-    pitch += yoffset;
-
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
 }
 
 void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -130,10 +135,11 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 theta_mod_y -= 1.f;
         }
 
-      
+        if (key == GLFW_KEY_Z && action == GLFW_PRESS)
+        {
+            useFrontCamera = !useFrontCamera;
+        }
 
-       
-        
         //testing condition for ghost cars
     }
    
@@ -651,7 +657,16 @@ int main(void)
         // (FOV, Aspect Ratio, zNear, zFar)
 
         // Position Matrix of Camera
-        glm::vec3 cameraPos = glm::vec3(car_pos_x, car_pos_y + 0.5f, car_pos_z + 1.5f); // Move camera above and behind the car
+        glm::vec3 cameraPos;
+        if (useFrontCamera)
+        {
+            frontCameraPos = glm::vec3(car_pos_x, car_pos_y + 0.2f, car_pos_z - 0.3f); // Move camera in front of the car
+            cameraPos = frontCameraPos;
+        }
+        else
+        {
+            cameraPos = glm::vec3(car_pos_x, car_pos_y + 0.5f, car_pos_z + 1.5f); // Move camera above and behind the car
+        }
 
         // Calculate the new orientation
         glm::vec3 front;
