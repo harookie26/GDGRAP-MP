@@ -7,7 +7,7 @@
 class TextureLoader
 {
 public:
-    static GLuint loadTexture(const std::string& path, bool flipVertically = true);
+	static GLuint loadTexture(const std::string& path, bool flipVertically = true);
 };
 
 #endif // TEXTURELOADER_H

@@ -7,7 +7,7 @@
 #include <sstream>
 #include <iostream>
 #include <glm/vec3.hpp>
-#include <glm/mat4x4.hpp> // Include the header for glm::mat4
+#include <glm/mat4x4.hpp>
 
 class Shader
 {

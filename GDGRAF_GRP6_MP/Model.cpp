@@ -29,7 +29,7 @@ void Model::draw(GLuint* shaderProg, GLuint* VAO, std::vector<GLfloat>* fullVert
 	model = glm::scale(model, scale);
 
 	GLint modelLoc = glGetUniformLocation(*shaderProg, "model");
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model));
 
 	glBindVertexArray(*VAO);
 	glDrawArrays(GL_TRIANGLES, 0, fullVertexData->size() / 8); // Assuming each vertex has 8 attributes
