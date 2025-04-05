@@ -55,6 +55,27 @@ bool firstMouse = true;
 bool useFrontCamera = false;
 glm::vec3 frontCameraPos;
 
+//wah
+//R, L, U, D, F, B
+std::string facesSkybox[]{
+    "Skybox/rainbow_rt.png",
+    "Skybox/rainbow_lf.png",
+    "Skybox/rainbow_up.png",
+    "Skybox/rainbow_dn.png",
+    "Skybox/rainbow_ft.png",
+    "Skybox/rainbow_bk.png"
+};
+
+//R, L, U, D, F, B
+std::string MornSkybox[]{
+    "Skybox/rainbow_rt.png",
+    "Skybox/rainbow_lf.png",
+    "Skybox/rainbow_up.png",
+    "Skybox/rainbow_dn.png",
+    "Skybox/rainbow_ft.png",
+    "Skybox/rainbow_bk.png"
+};
+
 void Mouse_Callback(GLFWwindow* window, double xpos, double ypos)
 {
     if (!useFrontCamera) // Only update orientation if rear camera is active
@@ -162,7 +183,10 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
             useFrontCamera = !useFrontCamera;
         }
 
-
+		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+		{
+			useFrontCamera = !useFrontCamera;
+		}
     }
    
 	
@@ -186,8 +210,8 @@ int main(void)
     if (!glfwInit())
         return -1;
 
-    float windowWidth = 600;
-    float windowHeight = 600;
+    float windowWidth = 1000;
+    float windowHeight = 700;
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(windowWidth, windowHeight, "Ram tempo", NULL, NULL);
@@ -354,15 +378,7 @@ int main(void)
 
     glEnableVertexAttribArray(0);
 
-    //R, L, U, D, F, B
-    std::string facesSkybox[]{
-        "Skybox/rainbow_rt.png",
-        "Skybox/rainbow_lf.png",
-        "Skybox/rainbow_up.png",
-        "Skybox/rainbow_dn.png",
-        "Skybox/rainbow_ft.png",
-        "Skybox/rainbow_bk.png"
-    };
+ 
 
     unsigned int skyboxTex;
     glGenTextures(1, &skyboxTex);
