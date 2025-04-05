@@ -142,9 +142,11 @@
     <ClCompile Include="GDGRAF_GRP6_MP.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Model.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>

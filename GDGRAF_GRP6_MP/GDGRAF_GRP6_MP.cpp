@@ -13,6 +13,7 @@
 #include "stb_image.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
+#include "Shader.h"
 #include "tiny_obj_loader.h"
 
 float brightness = 5.0f;
@@ -189,17 +190,10 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		}
     }
    
-	
-        
-
-    
-   
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE); // Closes the window by pressing the Escape key
     }
-    
-	
 }
 
 int main(void)
@@ -257,65 +251,8 @@ int main(void)
         0
     );
 
-    //Vertex Shader
-
-    std::fstream vertSrc("Shaders/Sam.vert");
-    std::stringstream vertBuff;
-    vertBuff << vertSrc.rdbuf();
-
-    std::string vertS = vertBuff.str();
-    const char* v = vertS.c_str();
-
-    std::fstream fragSrc("Shaders/Sam.frag");
-    std::stringstream fragBuff;
-    fragBuff << fragSrc.rdbuf();
-    std::string fragS = fragBuff.str();
-    const char* f = fragS.c_str();
-
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &v, NULL);
-    glCompileShader(vertexShader);
-
-    GLuint fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragShader, 1, &f, NULL);
-    glCompileShader(fragShader);
-
-    GLuint shaderProg = glCreateProgram();
-    glAttachShader(shaderProg, vertexShader);
-    glAttachShader(shaderProg, fragShader);
-
-    glLinkProgram(shaderProg);
-
-    //Skybox Shader
-
-    std::fstream sky_vertSrc("Shaders/Skybox.vert");
-    std::stringstream sky_vertBuff;
-    sky_vertBuff << sky_vertSrc.rdbuf();
-
-    std::string sky_vertS = sky_vertBuff.str();
-    const char* sky_v = sky_vertS.c_str();
-
-    std::fstream sky_fragSrc("Shaders/Skybox.frag");
-    std::stringstream sky_fragBuff;
-    sky_fragBuff << sky_fragSrc.rdbuf();
-    std::string sky_fragS = sky_fragBuff.str();
-    const char* sky_f = sky_fragS.c_str();
-
-    GLuint sky_vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(sky_vertexShader, 1, &sky_v, NULL);
-    glCompileShader(sky_vertexShader);
-
-    GLuint sky_fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(sky_fragShader, 1, &sky_f, NULL);
-    glCompileShader(sky_fragShader);
-
-    GLuint skyboxShaderProg = glCreateProgram();
-    glAttachShader(skyboxShaderProg, sky_vertexShader);
-    glAttachShader(skyboxShaderProg, sky_fragShader);
-
-    glLinkProgram(skyboxShaderProg);
-
-    //End of Skybox
+    Shader shaderProg("Shaders/Sam.vert", "Shaders/Sam.frag");
+    Shader skyboxShaderProg("Shaders/Skybox.vert", "Shaders/Skybox.frag");
 
         /*
       7--------6
@@ -377,8 +314,6 @@ int main(void)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), &skyboxIndices, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-
- 
 
     unsigned int skyboxTex;
     glGenTextures(1, &skyboxTex);
@@ -683,10 +618,10 @@ int main(void)
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//destubatuib
     /* Loop until the user closes the window */
+    /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glm::vec3 lightPos = glm::vec3(lightX, lightY, lightZ);
@@ -714,24 +649,19 @@ int main(void)
         front = glm::normalize(front);
 
         glm::vec3 cameraCenter = cameraPos + front;
-
         glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)); // Pointing upwards
 
         glm::mat4 viewMatrix = glm::lookAt(cameraPos, cameraCenter, worldUp);
 
-
-        //skybox implem
+        // Skybox implementation
         glDepthMask(GL_FALSE);
         glDepthFunc(GL_LEQUAL);
-        glUseProgram(skyboxShaderProg);
+        skyboxShaderProg.use();
         glm::mat4 sky_view = glm::mat4(1.0);
         sky_view = glm::mat4(glm::mat3(viewMatrix));
 
-        unsigned int sky_projectionLoc = glGetUniformLocation(skyboxShaderProg, "projection");
-        glUniformMatrix4fv(sky_projectionLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-        unsigned int sky_viewLoc = glGetUniformLocation(skyboxShaderProg, "view");
-        glUniformMatrix4fv(sky_viewLoc, 1, GL_FALSE, glm::value_ptr(sky_view));
+        skyboxShaderProg.setMat4("projection", projectionMatrix);
+        skyboxShaderProg.setMat4("view", sky_view);
 
         glBindVertexArray(skyboxVAO);
         glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
@@ -741,158 +671,62 @@ int main(void)
         glDepthMask(GL_TRUE);
         glDepthFunc(GL_LESS);
 
-        glUseProgram(shaderProg);
+        shaderProg.use();
 
-        /// Render main model (car)
+        // Render main model (car)
         glm::mat4 transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x, car_pos_y, car_pos_z)); // Use car's position
-
         transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
 
         // Rotate the model to look forward
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
 
-        unsigned int transformLoc = glGetUniformLocation(shaderProg, "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
+        shaderProg.setMat4("transform", transformation_matrix);
+        shaderProg.setMat4("view", viewMatrix);
+        shaderProg.setMat4("projection", projectionMatrix);
+        shaderProg.setFloat("alpha", 1.0f);
+        shaderProg.setVec3("lightPos", lightPos);
+        shaderProg.setVec3("lightColor", lightColor);
+        shaderProg.setInt("tex0", 0);
+        shaderProg.setInt("norm_tex", 1);
+        shaderProg.setFloat("ambientStr", ambientStr);
+        shaderProg.setVec3("ambientColor", ambientColor);
+        shaderProg.setVec3("cameraPos", cameraPos);
+        shaderProg.setFloat("specStr", specStr);
+        shaderProg.setFloat("specPhong", specPhong);
+        shaderProg.setVec3("lightColor2", lightColor2);
+        shaderProg.setFloat("brightness", brightness);
 
-
-        //view and light
-        unsigned int viewLoc = glGetUniformLocation(shaderProg, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-
-        unsigned int projLoc = glGetUniformLocation(shaderProg, "projection");
-        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-
-        unsigned int alphaLoc = glGetUniformLocation(shaderProg, "alpha");
-        glUniform1f(alphaLoc, 1.0f); // Full opacity for the main model
-
-        GLuint lightAddress = glGetUniformLocation(shaderProg, "lightPos");
-        glUniform3fv(lightAddress, 1, glm::value_ptr(lightPos));
-        GLuint lightColorAddress = glGetUniformLocation(shaderProg, "lightColor");
-        glUniform3fv(lightColorAddress, 1, glm::value_ptr(lightColor));
-
-        //textures and 
-        glActiveTexture(GL_TEXTURE0);
-        GLuint tex0Address = glGetUniformLocation(shaderProg, "tex0");
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glUniform1i(tex0Address, 0);
-
-        glActiveTexture(GL_TEXTURE1);
-        GLuint tex1Address = glGetUniformLocation(shaderProg, "norm_tex");
-        glBindTexture(GL_TEXTURE_2D, norm_tex);
-        glUniform1i(tex1Address, 1);
-
-        GLuint ambientStrAddress = glGetUniformLocation(shaderProg, "ambientStr");
-        glUniform1f(ambientStrAddress, ambientStr);
-        GLuint ambientColorAddress = glGetUniformLocation(shaderProg, "ambientColor");
-        glUniform3fv(ambientColorAddress, 1, glm::value_ptr(ambientColor));
-
-        GLuint cameraPosAddress = glGetUniformLocation(shaderProg, "cameraPos");
-        glUniform3fv(cameraPosAddress, 1, glm::value_ptr(cameraPos));
-
-
-        GLuint specStrAddress = glGetUniformLocation(shaderProg, "specStr");
-        glUniform1f(specStrAddress, specStr);
-        GLuint specPhongAddress = glGetUniformLocation(shaderProg, "specPhong");
-        glUniform1f(specPhongAddress, specPhong);
-
-        GLuint lightColor2Address = glGetUniformLocation(shaderProg, "lightColor2"); //assigning color 2
-        glUniform3fv(lightColor2Address, 1, glm::value_ptr(lightColor2));
-
-        GLuint brightnessLoc = glGetUniformLocation(shaderProg, "brightness");
-        glUniform1f(brightnessLoc, brightness);
-
-        glUseProgram(shaderProg);
         glBindVertexArray(VAO);
-        //glDrawElements(GL_TRIANGLES, mesh_indices.size(), GL_UNSIGNED_INT, 0);
         glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
 
         // Render left model
         transformation_matrix = glm::translate(identity_matrix, glm::vec3(-0.5f, -0.5f, 0.0f)); // Place model to the left
-
         transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
-
-        // Rotate the model to look forward
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
 
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
-        glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the left model
+        shaderProg.setMat4("transform", transformation_matrix);
+        shaderProg.setFloat("alpha", 0.5f); // Set alpha to 0.5 for the left model
         glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
 
         // Render right model
         transformation_matrix = glm::translate(identity_matrix, glm::vec3(0.5f, -0.5f, 0.0f)); // Place model to the right
-
         transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
-
-        // Rotate the model to look forward
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-
         transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
 
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
-        glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the right model
+        shaderProg.setMat4("transform", transformation_matrix);
+        shaderProg.setFloat("alpha", 0.5f); // Set alpha to 0.5 for the right model
         glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
 
-        /*
-* 
-         * To make the ghost cars follow along with the main car, comment the rendering above and uncomment this.
-         * I decided to comment this first so that the camera lock with the main car is visible to work.
-         *
-        // Render left ghost car
-        if(state==1){
-        transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x - 0.5f, car_pos_y, car_pos_z)); // Place model to the left
-
-        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
-
-        // Rotate the model to look forward
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
-
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
-
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
-
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
-        glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the left model
-        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
-        }
-        // Render right ghost car
-        transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x + 0.5f, car_pos_y, car_pos_z)); // Place model to the right
-
-        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
-
-        // Rotate the model to look forward
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
-
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
-
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
-
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transformation_matrix));
-        glUniform1f(alphaLoc, 0.5f); // Set alpha to 0.5 for the right model
-        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
-        */
-
-
-    	glEnd();
+        glEnd();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -900,6 +734,7 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
+
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
