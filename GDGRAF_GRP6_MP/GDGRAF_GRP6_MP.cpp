@@ -17,6 +17,7 @@
 
 #include "Shader.h"
 #include "Renderer.h"
+#include "Skybox.h"
 
 float brightness = 5.0f;
 
@@ -223,7 +224,6 @@ int main(void)
     gladLoadGL();
 
     glfwSetKeyCallback(window, Key_Callback);
-
     glfwSetCursorPosCallback(window, Mouse_Callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -256,108 +256,13 @@ int main(void)
     Shader shaderProg("Shaders/Sam.vert", "Shaders/Sam.frag");
     Shader skyboxShaderProg("Shaders/Skybox.vert", "Shaders/Skybox.frag");
 
+    // Convert array to vector
+    std::vector<std::string> facesSkyboxVec(facesSkybox, facesSkybox + sizeof(facesSkybox) / sizeof(std::string));
+
+    // Create Skybox instance
+    Skybox skybox(facesSkyboxVec);
+
     Renderer renderer(windowWidth, windowHeight);
-
-
-        /*
-      7--------6
-     /|       /|
-    4--------5 |
-    | |      | |
-    | 3------|-2
-    |/       |/
-    0--------1
-    */
-    //Vertices for the cube
-    float skyboxVertices[]{
-        -1.f, -1.f, 1.f, //0
-        1.f, -1.f, 1.f,  //1
-        1.f, -1.f, -1.f, //2
-        -1.f, -1.f, -1.f,//3
-        -1.f, 1.f, 1.f,  //4
-        1.f, 1.f, 1.f,   //5
-        1.f, 1.f, -1.f,  //6
-        -1.f, 1.f, -1.f  //7
-    };
-
-    //Skybox Indices
-    unsigned int skyboxIndices[]{
-        1,2,6,
-        6,5,1,
-
-        0,4,7,
-        7,3,0,
-
-        4,5,6,
-        6,7,4,
-
-        0,3,2,
-        2,1,0,
-
-        0,1,5,
-        5,4,0,
-
-        3,7,6,
-        6,2,3
-    };
-    /*
-    
-    SKYBOXES
-
-    */
-    unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
-    glGenVertexArrays(1, &skyboxVAO);
-    glGenBuffers(1, &skyboxVBO);
-    glGenBuffers(1, &skyboxEBO);
-
-    glBindVertexArray(skyboxVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*)0);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, skyboxEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(skyboxIndices), &skyboxIndices, GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-
-    unsigned int skyboxTex;
-    glGenTextures(1, &skyboxTex);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //mag filter = upscale, min filter = downscale
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    for (unsigned int i = 0; i < 6; i++)
-    {
-        int width, height, skyCChannel;
-        stbi_set_flip_vertically_on_load(false);
-
-        unsigned char* data = stbi_load(facesSkybox[i].c_str(), &width, &height, &skyCChannel, 0);
-
-        if (data)//for texture data
-        {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                0,
-                GL_RGB,// change to RGB if jpg
-                width,
-                height,
-                0,
-                GL_RGB, // change to RGB if jpg
-                GL_UNSIGNED_BYTE, 
-                data
-            );
-
-        }
-
-        stbi_image_free(data);
-    }
-    stbi_set_flip_vertically_on_load(true);
-
-    //end of skybox setup
 
     std::string path = "3D/Car.obj";
     std::vector<tinyobj::shape_t> shapes;
@@ -661,7 +566,7 @@ int main(void)
         renderer.setLight(lightPos, lightColor);
 
         // Render skybox
-        renderer.renderSkybox(skyboxShaderProg, skyboxVAO, skyboxTex, renderer.getViewMatrix(), projectionMatrix);
+        skybox.render(skyboxShaderProg, renderer.getViewMatrix(), projectionMatrix);
 
         // Render main model (car)
         renderer.renderModel(shaderProg, VAO, fullVertexData, glm::vec3(car_pos_x, car_pos_y, car_pos_z), glm::vec3(0.1f), glm::vec3(theta_mod_x, theta_mod_y, theta_mod_z), 1.0f);
