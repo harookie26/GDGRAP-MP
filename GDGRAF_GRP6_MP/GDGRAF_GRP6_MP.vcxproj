@@ -141,12 +141,14 @@
   <ItemGroup>
     <ClCompile Include="GDGRAF_GRP6_MP.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="Lighting.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Skybox.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Lighting.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />

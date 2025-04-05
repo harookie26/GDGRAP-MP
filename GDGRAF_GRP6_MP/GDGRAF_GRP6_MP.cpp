@@ -18,6 +18,7 @@
 #include "Shader.h"
 #include "Renderer.h"
 #include "Skybox.h"
+#include "Lighting.h"
 
 float brightness = 5.0f;
 
@@ -40,7 +41,7 @@ float lightY = 3;
 float lightZ = 0;
 
 float theta_mod_x = 0.0f;
-float theta_mod_y = 90.0f;
+float theta_mod_y = 0.0f;
 float theta_mod_z = 0.0f;
 
 float axis_x = 0.0f;
@@ -220,31 +221,31 @@ int main(void)
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
-    //Initialize Glad
+    // Initialize Glad
     gladLoadGL();
 
     glfwSetKeyCallback(window, Key_Callback);
     glfwSetCursorPosCallback(window, Mouse_Callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    GLfloat UV[]{
-    0.f, 1.f,
-    0.f, 0.f,
-    1.f, 1.f,
-    1.f, 0.f,
-    1.f, 1.f,
-    1.f, 0.f,
-    0.f, 1.f,
-    0.f, 0.f
+    GLfloat UV[] = {
+        0.f, 1.f,
+        0.f, 0.f,
+        1.f, 1.f,
+        1.f, 0.f,
+        1.f, 1.f,
+        1.f, 0.f,
+        0.f, 1.f,
+        0.f, 0.f
     };
 
     stbi_set_flip_vertically_on_load(true);
 
-    int img_width, img_height, color_channels; //color channels ranges from 3 - 4 (RGB - RGBA)
-    //3 == RGB JPGS !tranparency
-    //4 == RGBA PNGS transparency
+    int img_width, img_height, color_channels; // color channels range from 3 - 4 (RGB - RGBA)
+    // 3 == RGB JPGS !transparency
+    // 4 == RGBA PNGS transparency
 
-    //texture
+    // texture
     unsigned char* tex_bytes = stbi_load(
         "3D/brickwall.jpg",
         &img_width,
@@ -263,6 +264,9 @@ int main(void)
     Skybox skybox(facesSkyboxVec);
 
     Renderer renderer(windowWidth, windowHeight);
+
+    Lighting lighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(1, 1, 1), 0.1f, 5.0f, 16.0f);
+    renderer.setLight(lighting);
 
     std::string path = "3D/Car.obj";
     std::vector<tinyobj::shape_t> shapes;
@@ -290,7 +294,7 @@ int main(void)
     std::vector<glm::vec3>tangents;
     std::vector<glm::vec3>bitangents;
 
-    for (int i = 0;i < shapes[0].mesh.indices.size();i += 3)
+    for (int i = 0; i < shapes[0].mesh.indices.size(); i += 3)
     {
         tinyobj::index_t vData1 = shapes[0].mesh.indices[i];
         tinyobj::index_t vData2 = shapes[0].mesh.indices[i + 1];
@@ -514,28 +518,18 @@ int main(void)
 
     glEnable(GL_DEPTH_TEST);
 
-    glm::vec3 lightPos = glm::vec3(-10, 3, 5);
-    glm::vec3 lightColor = glm::vec3(1, 1, 1); //white
-    glm::vec3 lightColor1 = glm::vec3(1, 1, 1); //for testing ambient red
-    glm::vec3 lightColor2 = glm::vec3(0, 0, 0); //for testing specular green
-    float ambientStr = 0.1f; //must not have high values
-    glm::vec3 ambientColor = lightColor1;
-    float specStr = 5.0f;
-    float specPhong = 16;
-
     ///ALPHA BLEND
     glEnable(GL_BLEND);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//destubatuib
-    /* Loop until the user closes the window */
-    /* Loop until the user closes the window */
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::vec3 lightPos = glm::vec3(lightX, lightY, lightZ);
+        lighting.setPosition(glm::vec3(lightX, lightY, lightZ));
+        renderer.setLight(lighting);
 
         glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f);
         // (FOV, Aspect Ratio, zNear, zFar)
@@ -563,7 +557,6 @@ int main(void)
         glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)); // Pointing upwards
 
         renderer.setCamera(cameraPos, front, worldUp);
-        renderer.setLight(lightPos, lightColor);
 
         // Render skybox
         skybox.render(skyboxShaderProg, renderer.getViewMatrix(), projectionMatrix);
@@ -583,7 +576,6 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
-
 
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);

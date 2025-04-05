@@ -1,7 +1,11 @@
 #include "Renderer.h"
 
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+
 Renderer::Renderer(float windowWidth, float windowHeight)
 {
+    // Initialize projection matrix
     projectionMatrix = glm::perspective(glm::radians(60.0f), windowWidth / windowHeight, 0.1f, 100.0f);
 }
 
@@ -32,6 +36,7 @@ void Renderer::renderModel(const Shader& shader, GLuint VAO, const std::vector<G
     transformation_matrix = glm::translate(transformation_matrix, position);
     transformation_matrix = glm::rotate(transformation_matrix, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
     transformation_matrix = glm::rotate(transformation_matrix, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     transformation_matrix = glm::rotate(transformation_matrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
     transformation_matrix = glm::scale(transformation_matrix, scale);
 
@@ -39,14 +44,16 @@ void Renderer::renderModel(const Shader& shader, GLuint VAO, const std::vector<G
     shader.setMat4("view", viewMatrix);
     shader.setMat4("projection", projectionMatrix);
     shader.setFloat("alpha", alpha);
-    shader.setVec3("lightPos", lightPos);
-    shader.setVec3("lightColor", lightColor);
+    shader.setVec3("lightPos", lighting.getPosition());
+    shader.setVec3("lightColor", lighting.getColor());
     shader.setVec3("cameraPos", cameraPos);
+    shader.setFloat("ambientStr", lighting.getAmbientStrength());
+    shader.setFloat("specStr", lighting.getSpecularStrength());
+    shader.setFloat("specPhong", lighting.getSpecularPhong());
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, vertexData.size() / 14);
 }
-
 
 void Renderer::setCamera(const glm::vec3& position, const glm::vec3& front, const glm::vec3& up)
 {
@@ -54,10 +61,9 @@ void Renderer::setCamera(const glm::vec3& position, const glm::vec3& front, cons
     viewMatrix = glm::lookAt(position, position + front, up);
 }
 
-void Renderer::setLight(const glm::vec3& position, const glm::vec3& color)
+void Renderer::setLight(const Lighting& lighting)
 {
-    lightPos = position;
-    lightColor = color;
+    this->lighting = lighting;
 }
 
 void Renderer::setProjectionMatrix(const glm::mat4& projectionMatrix)
