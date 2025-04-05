@@ -13,8 +13,10 @@
 #include "stb_image.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "Shader.h"
 #include "tiny_obj_loader.h"
+
+#include "Shader.h"
+#include "Renderer.h"
 
 float brightness = 5.0f;
 
@@ -37,7 +39,7 @@ float lightY = 3;
 float lightZ = 0;
 
 float theta_mod_x = 0.0f;
-float theta_mod_y = 0.0f;
+float theta_mod_y = 90.0f;
 float theta_mod_z = 0.0f;
 
 float axis_x = 0.0f;
@@ -253,6 +255,9 @@ int main(void)
 
     Shader shaderProg("Shaders/Sam.vert", "Shaders/Sam.frag");
     Shader skyboxShaderProg("Shaders/Skybox.vert", "Shaders/Skybox.frag");
+
+    Renderer renderer(windowWidth, windowHeight);
+
 
         /*
       7--------6
@@ -619,6 +624,7 @@ int main(void)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);//destubatuib
     /* Loop until the user closes the window */
     /* Loop until the user closes the window */
+    /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
@@ -651,82 +657,20 @@ int main(void)
         glm::vec3 cameraCenter = cameraPos + front;
         glm::vec3 worldUp = glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)); // Pointing upwards
 
-        glm::mat4 viewMatrix = glm::lookAt(cameraPos, cameraCenter, worldUp);
+        renderer.setCamera(cameraPos, front, worldUp);
+        renderer.setLight(lightPos, lightColor);
 
-        // Skybox implementation
-        glDepthMask(GL_FALSE);
-        glDepthFunc(GL_LEQUAL);
-        skyboxShaderProg.use();
-        glm::mat4 sky_view = glm::mat4(1.0);
-        sky_view = glm::mat4(glm::mat3(viewMatrix));
-
-        skyboxShaderProg.setMat4("projection", projectionMatrix);
-        skyboxShaderProg.setMat4("view", sky_view);
-
-        glBindVertexArray(skyboxVAO);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTex);
-
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-        glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LESS);
-
-        shaderProg.use();
+        // Render skybox
+        renderer.renderSkybox(skyboxShaderProg, skyboxVAO, skyboxTex, renderer.getViewMatrix(), projectionMatrix);
 
         // Render main model (car)
-        glm::mat4 transformation_matrix = glm::translate(identity_matrix, glm::vec3(car_pos_x, car_pos_y, car_pos_z)); // Use car's position
-        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
-
-        // Rotate the model to look forward
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
-
-        shaderProg.setMat4("transform", transformation_matrix);
-        shaderProg.setMat4("view", viewMatrix);
-        shaderProg.setMat4("projection", projectionMatrix);
-        shaderProg.setFloat("alpha", 1.0f);
-        shaderProg.setVec3("lightPos", lightPos);
-        shaderProg.setVec3("lightColor", lightColor);
-        shaderProg.setInt("tex0", 0);
-        shaderProg.setInt("norm_tex", 1);
-        shaderProg.setFloat("ambientStr", ambientStr);
-        shaderProg.setVec3("ambientColor", ambientColor);
-        shaderProg.setVec3("cameraPos", cameraPos);
-        shaderProg.setFloat("specStr", specStr);
-        shaderProg.setFloat("specPhong", specPhong);
-        shaderProg.setVec3("lightColor2", lightColor2);
-        shaderProg.setFloat("brightness", brightness);
-
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
+        renderer.renderModel(shaderProg, VAO, fullVertexData, glm::vec3(car_pos_x, car_pos_y, car_pos_z), glm::vec3(0.1f), glm::vec3(theta_mod_x, theta_mod_y, theta_mod_z), 1.0f);
 
         // Render left model
-        transformation_matrix = glm::translate(identity_matrix, glm::vec3(-0.5f, -0.5f, 0.0f)); // Place model to the left
-        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
-
-        shaderProg.setMat4("transform", transformation_matrix);
-        shaderProg.setFloat("alpha", 0.5f); // Set alpha to 0.5 for the left model
-        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
+        renderer.renderModel(shaderProg, VAO, fullVertexData, glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0.1f), glm::vec3(theta_mod_x, theta_mod_y, theta_mod_z), 0.5f);
 
         // Render right model
-        transformation_matrix = glm::translate(identity_matrix, glm::vec3(0.5f, -0.5f, 0.0f)); // Place model to the right
-        transformation_matrix = glm::scale(transformation_matrix, glm::vec3(0.1f, 0.1f, 0.1f)); // Increase the scale of the model
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(90.0f), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f))); // Rotate around Y-axis
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_x), glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f)));
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_y), glm::normalize(glm::vec3(0.0f, 1.0f, 0.0f)));
-        transformation_matrix = glm::rotate(transformation_matrix, glm::radians(theta_mod_z), glm::normalize(glm::vec3(0.0f, 0.0f, 1.0f)));
-
-        shaderProg.setMat4("transform", transformation_matrix);
-        shaderProg.setFloat("alpha", 0.5f); // Set alpha to 0.5 for the right model
-        glDrawArrays(GL_TRIANGLES, 0, fullVertexData.size() / 14);
-
-        glEnd();
+        renderer.renderModel(shaderProg, VAO, fullVertexData, glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.1f), glm::vec3(theta_mod_x, theta_mod_y, theta_mod_z), 0.5f);
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
