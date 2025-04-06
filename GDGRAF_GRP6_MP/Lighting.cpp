@@ -48,6 +48,13 @@ void Lighting::setType(LightType type)
     this->type = type;
 }
 
+void Lighting::setAttenuation(float constant, float linear, float quadratic)
+{
+    this->constantAttenuation = constant;
+    this->linearAttenuation = linear;
+    this->quadraticAttenuation = quadratic;
+}
+
 glm::vec3 Lighting::getPosition() const
 {
     return position;

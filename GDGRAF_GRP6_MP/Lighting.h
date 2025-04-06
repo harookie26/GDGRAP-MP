@@ -22,6 +22,7 @@ public:
     void setSpecularPhong(float phong);
     void setDirection(const glm::vec3& direction);
     void setType(LightType type);
+    void setAttenuation(float constant, float linear, float quadratic);
 
     glm::vec3 getPosition() const;
     glm::vec3 getColor() const;
@@ -39,6 +40,9 @@ private:
     float specularPhong;
     glm::vec3 direction;
     LightType type;
+    float constantAttenuation; 
+    float linearAttenuation;   
+    float quadraticAttenuation; 
 };
 
 #endif // LIGHTING_H

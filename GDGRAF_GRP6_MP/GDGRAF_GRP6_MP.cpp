@@ -21,9 +21,13 @@
 
 float brightness = 100.0f;
 
-float lightX = -10;
-float lightY = 3;
+float lightX = 0;
+float lightY = 0;
 float lightZ = 0;
+
+float lightDirX = 0;
+float lightDirY = -1;
+float lightDirZ = 0.5;
 
 std::string morningSkybox[]{
 	"Skybox/morningSkybox/mRt.png",
@@ -42,6 +46,11 @@ std::string nightSkybox[]{
 	"Skybox/nightSkybox/mFt.png",
 	"Skybox/nightSkybox/mBk.png"
 };
+
+// Add point light positions for the cars
+glm::vec3 car1LightPos(0, 0, 0);
+glm::vec3 car2LightPos(0.5f, -0.5f, -0.5f);
+
 
 int main(void)
 {
@@ -69,6 +78,7 @@ int main(void)
 
 	Shader shaderProg("Shaders/Sam.vert", "Shaders/Sam.frag");
 	Shader skyboxShaderProg("Shaders/Skybox.vert", "Shaders/Skybox.frag");
+	Shader carShader("Shaders/Car.vert", "Shaders/Car.frag");
 
 	std::vector<std::string> facesMorningSkybox(morningSkybox, morningSkybox + sizeof(morningSkybox) / sizeof(std::string));
 	std::vector<std::string> facesNightSkybox(nightSkybox, nightSkybox + sizeof(nightSkybox) / sizeof(std::string));
@@ -80,16 +90,20 @@ int main(void)
 
 	Renderer renderer(windowWidth, windowHeight);
 
-	Lighting lighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(1, 1, 1), 0.1f, 5.0f, 16.0f, Lighting::LightType::DIRECTIONAL, glm::vec3(-1.0f, -1.0f, -1.0f));
-	renderer.setLight(lighting);
+	Lighting morningLighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(1.0f, 0.9f, 0.7f), 0.1f, 5.0f, 16.0f, Lighting::LightType::DIRECTIONAL, glm::vec3(lightDirX, lightDirY, lightDirZ)); // Adjusted direction vector
+	Lighting nightLighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(0.2f, 0.2f, 0.6f), 0.1f, 5.0f, 16.0f, Lighting::LightType::DIRECTIONAL, glm::vec3(lightDirX, lightDirY, lightDirZ)); // Adjusted direction vector
+
+	// Add point lights for the cars
+	//Lighting car1Light(car1LightPos, glm::vec3(1.0f, 0, 0), 0.1f, 1.0f, 1.0f, Lighting::LightType::POINT);
+	//car1Light.setAttenuation(1.0f, 1.0f, 1.0f); // Increase these values to make the light very small
 
 	ObjectLoader objectLoader;
 	std::vector<GLfloat> fullVertexData;
 	std::vector<GLuint> mesh_indices;
 	objectLoader.loadObject("3D/Car.obj", fullVertexData, mesh_indices);
 
-	GLuint texture = TextureLoader::loadTexture("3D/brickwall.jpg");
-	GLuint norm_tex = TextureLoader::loadTexture("3D/brickwall_normal.jpg");
+	GLuint texture = TextureLoader::loadTexture("3D/Road.png");
+	GLuint norm_tex = TextureLoader::loadTexture("3D/Road_Normals.png");
 
 	GLuint VAO, VBO, EBO;
 	glGenVertexArrays(1, &VAO);
@@ -134,12 +148,12 @@ int main(void)
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		lighting.setPosition(glm::vec3(lightX, lightY, lightZ));
-		renderer.setLight(lighting);
-
 		shaderProg.use();
 		shaderProg.setInt("lightType", 1); // 1 for directional light
-		shaderProg.setVec3("lightDir", glm::vec3(-1.0f, -1.0f, -1.0f));
+		shaderProg.setVec3("lightDir", glm::vec3(lightDirX, lightDirY, lightDirZ));
+
+		morningLighting.setPosition(glm::vec3(lightX, lightY, lightZ));
+		//renderer.setLight(morningLighting);
 
 		glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), windowWidth / windowHeight, 0.1f, 100.0f);
 
@@ -171,13 +185,38 @@ int main(void)
 		if (InputHandler::currentSkybox == 0)
 		{
 			currentSkybox = &morningSkyboxObj;
+			renderer.setLight(morningLighting);
 		}
 		else if (InputHandler::currentSkybox == 1)
 		{
 			currentSkybox = &nightSkyboxObj;
+			renderer.setLight(nightLighting);
 		}
 
 		currentSkybox->render(skyboxShaderProg, renderer.getViewMatrix(), projectionMatrix);
+
+		/*// Update car light positions based on car positions
+		car1Light.setPosition(glm::vec3(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z));
+
+		// Set the lights in the renderer
+		renderer.setLight(car1Light);
+
+		carShader.use();
+		// Set point light properties
+		shaderProg.setVec3("pointLights[0].position", car1Light.getPosition());
+		shaderProg.setVec3("pointLights[0].color", car1Light.getColor());
+		shaderProg.setFloat("pointLights[0].ambientStrength", car1Light.getAmbientStrength());
+		shaderProg.setFloat("pointLights[0].specularStrength", car1Light.getSpecularStrength());
+		shaderProg.setFloat("pointLights[0].specularPhong", car1Light.getSpecularPhong());
+		shaderProg.setFloat("pointLights[0].constant", 1.0f);
+		shaderProg.setFloat("pointLights[0].linear", 0.09f);
+		shaderProg.setFloat("pointLights[0].quadratic", 0.032f);*/
+
+		carShader.setVec3("viewPos", cameraPos);
+
+
+		renderer.renderModel(carShader, VAO, fullVertexData, glm::vec3(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z), glm::vec3(0.1f), glm::vec3(InputHandler::theta_mod_x, InputHandler::theta_mod_y, InputHandler::theta_mod_z), 1.0f);
+
 
 		renderer.renderModel(shaderProg, VAO, fullVertexData,
 		                     glm::vec3(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z),

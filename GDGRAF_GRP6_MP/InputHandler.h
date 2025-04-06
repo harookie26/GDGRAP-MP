@@ -19,6 +19,7 @@ public:
     static float car_pos_x, car_pos_y, car_pos_z;
     static float theta_mod_x, theta_mod_y, theta_mod_z;
     static int currentSkybox; // Add this line
+	static int currentLightingMode; // 0 for morning, 1 for night
 };
 
 #endif // INPUTHANDLER_H
