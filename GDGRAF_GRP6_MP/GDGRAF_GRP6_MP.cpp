@@ -19,7 +19,7 @@
 #include "InputHandler.h"
 #include "Camera.h"
 
-float brightness = 5.0f;
+float brightness = 100.0f;
 
 float lightX = -10;
 float lightY = 3;
@@ -80,7 +80,7 @@ int main(void)
 
 	Renderer renderer(windowWidth, windowHeight);
 
-	Lighting lighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(1, 1, 1), 0.1f, 5.0f, 16.0f);
+	Lighting lighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(1, 1, 1), 0.1f, 5.0f, 16.0f, Lighting::LightType::DIRECTIONAL, glm::vec3(-1.0f, -1.0f, -1.0f));
 	renderer.setLight(lighting);
 
 	ObjectLoader objectLoader;
@@ -136,6 +136,10 @@ int main(void)
 
 		lighting.setPosition(glm::vec3(lightX, lightY, lightZ));
 		renderer.setLight(lighting);
+
+		shaderProg.use();
+		shaderProg.setInt("lightType", 1); // 1 for directional light
+		shaderProg.setVec3("lightDir", glm::vec3(-1.0f, -1.0f, -1.0f));
 
 		glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), windowWidth / windowHeight, 0.1f, 100.0f);
 

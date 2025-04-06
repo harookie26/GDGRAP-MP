@@ -3,17 +3,18 @@
 layout(location = 0) in vec3 aPos; // Position
 layout(location = 1) in vec3 vertexNormal; // Normal
 layout(location = 2) in vec2 aTex; // UV
+
 layout(location = 3) in vec3 m_tan; // Tangent
 layout(location = 4) in vec3 m_btan; // Bitangent
-
-out vec3 normCoord;
-out vec3 fragPos;
-out vec2 texCoord; // Ensure this matches the fragment shader
-out mat3 TBN;
 
 uniform mat4 transform;
 uniform mat4 projection;
 uniform mat4 view;
+
+out vec3 normCoord;
+out vec3 fragPos;
+out vec2 texCoord;
+out mat3 TBN;
 
 void main()
 {
