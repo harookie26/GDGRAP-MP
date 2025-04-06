@@ -10,6 +10,8 @@ float InputHandler::speed = 0.0f;
 float InputHandler::car_pos_x = 0.0f, InputHandler::car_pos_y = 0.0f, InputHandler::car_pos_z = 0.0f;
 float InputHandler::theta_mod_x = 0.0f, InputHandler::theta_mod_y = 0.0f, InputHandler::theta_mod_z = 0.0f;
 
+int InputHandler::currentSkybox = 0; // Initialize the current skybox
+
 void InputHandler::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (!useFrontCamera)
@@ -107,6 +109,18 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 		if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 		{
 			useFrontCamera = !useFrontCamera;
+		}
+		if (action == GLFW_PRESS)
+		{
+			switch (key)
+			{
+			case GLFW_KEY_Q:
+				currentSkybox = 0; // Morning skybox
+				break;
+			case GLFW_KEY_E:
+				currentSkybox = 1; // Night skybox
+				break;
+			}
 		}
 	}
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)

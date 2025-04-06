@@ -25,13 +25,22 @@ float lightX = -10;
 float lightY = 3;
 float lightZ = 0;
 
-std::string facesSkybox[]{
-	"Skybox/rainbow_rt.png",
-	"Skybox/rainbow_lf.png",
-	"Skybox/rainbow_up.png",
-	"Skybox/rainbow_dn.png",
-	"Skybox/rainbow_ft.png",
-	"Skybox/rainbow_bk.png"
+std::string morningSkybox[]{
+	"Skybox/morningSkybox/mRt.png",
+	"Skybox/morningSkybox/mLf.png",
+	"Skybox/morningSkybox/mUp.png",
+	"Skybox/morningSkybox/mDn.png",
+	"Skybox/morningSkybox/mFt.png",
+	"Skybox/morningSkybox/mBk.png"
+};
+
+std::string nightSkybox[]{
+	"Skybox/nightSkybox/mRt.png",
+	"Skybox/nightSkybox/mLf.png",
+	"Skybox/nightSkybox/mUp.png",
+	"Skybox/nightSkybox/mDn.png",
+	"Skybox/nightSkybox/mFt.png",
+	"Skybox/nightSkybox/mBk.png"
 };
 
 int main(void)
@@ -61,8 +70,13 @@ int main(void)
 	Shader shaderProg("Shaders/Sam.vert", "Shaders/Sam.frag");
 	Shader skyboxShaderProg("Shaders/Skybox.vert", "Shaders/Skybox.frag");
 
-	std::vector<std::string> facesSkyboxVec(facesSkybox, facesSkybox + sizeof(facesSkybox) / sizeof(std::string));
-	Skybox skybox(facesSkyboxVec);
+	std::vector<std::string> facesMorningSkybox(morningSkybox, morningSkybox + sizeof(morningSkybox) / sizeof(std::string));
+	std::vector<std::string> facesNightSkybox(nightSkybox, nightSkybox + sizeof(nightSkybox) / sizeof(std::string));
+
+	Skybox morningSkyboxObj(facesMorningSkybox);
+	Skybox nightSkyboxObj(facesNightSkybox);
+
+	Skybox* currentSkybox = &morningSkyboxObj;
 
 	Renderer renderer(windowWidth, windowHeight);
 
@@ -149,7 +163,17 @@ int main(void)
 
 		renderer.setCamera(cameraPos, front, worldUp);
 
-		skybox.render(skyboxShaderProg, renderer.getViewMatrix(), projectionMatrix);
+		// Update current skybox based on currentSkybox
+		if (InputHandler::currentSkybox == 0)
+		{
+			currentSkybox = &morningSkyboxObj;
+		}
+		else if (InputHandler::currentSkybox == 1)
+		{
+			currentSkybox = &nightSkyboxObj;
+		}
+
+		currentSkybox->render(skyboxShaderProg, renderer.getViewMatrix(), projectionMatrix);
 
 		renderer.renderModel(shaderProg, VAO, fullVertexData,
 		                     glm::vec3(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z),
