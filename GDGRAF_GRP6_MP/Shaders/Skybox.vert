@@ -1,11 +1,14 @@
 #version 330 core
-out vec4 FragColor;
 
-in vec3 TexCoords;
+layout(location = 0) in vec3 aPos;
 
-uniform samplerCube skybox;
+out vec3 TexCoords;
+
+uniform mat4 projection;
+uniform mat4 view;
 
 void main()
 {
-    FragColor = texture(skybox, TexCoords);
+    TexCoords = aPos;
+    gl_Position = projection * view * vec4(aPos, 1.0);
 }

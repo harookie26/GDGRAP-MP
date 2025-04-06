@@ -165,12 +165,6 @@
     <ClInclude Include="tiny_obj_loader.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\CarModel.frag" />
-    <None Include="Shaders\CarModel.vert" />
-    <None Include="Shaders\DirectonalLight.frag" />
-    <None Include="Shaders\DirectonalLight.vert" />
-    <None Include="Shaders\Road.frag" />
-    <None Include="Shaders\Road.vert" />
     <None Include="Shaders\Sam.frag" />
     <None Include="Shaders\Sam.vert" />
     <None Include="Shaders\Skybox.frag" />
