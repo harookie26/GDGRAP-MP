@@ -46,7 +46,7 @@ int main(void)
 
 	window = glfwCreateWindow(windowWidth, windowHeight, "Ram tempo", nullptr, nullptr);
 	if (!window)
-	{
+	{ 
 		glfwTerminate();
 		return -1;
 	}
