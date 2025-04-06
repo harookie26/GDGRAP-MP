@@ -18,6 +18,7 @@ public:
     static float speed;
     static float car_pos_x, car_pos_y, car_pos_z;
     static float theta_mod_x, theta_mod_y, theta_mod_z;
+    static int currentSkybox; // Add this line
 };
 
 #endif // INPUTHANDLER_H
