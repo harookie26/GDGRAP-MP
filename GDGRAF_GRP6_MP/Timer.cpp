@@ -14,7 +14,7 @@ void Timer::timeStart()
 		STime = cClock::now();
 		isRunning = true;
 	}
-	cout << "Timer started" << endl;
+//	cout << "Timer started" << endl;
 
 }
 void Timer::timeStop()

@@ -20,6 +20,8 @@
 #include "Camera.h"
 #include "Model.h"
 
+#include "Timer.h"
+
 float brightness = 100.0f;
 
 float lightX = 0;
@@ -51,7 +53,18 @@ std::string nightSkybox[]{
 // Add point light positions for the cars
 glm::vec3 car1LightPos(0, 0, 0);
 glm::vec3 car2LightPos(0.5f, -0.5f, -0.5f);
+Timer stopTimer;
 
+double car1TimeRecord;
+double car2TimeRecord;
+double car3TimeRecord;
+bool car1Finished = false;
+bool car2Finished = false;
+bool car3Finished = false;
+
+
+//testing
+float fingoal = 0.0f;
 
 int main(void)
 {
@@ -116,11 +129,24 @@ int main(void)
 	ghostCarModel2.setupBuffers();
 
 	GLuint texture = TextureLoader::loadTexture("3D/Road.png");
+	GLuint tex2 = TextureLoader::loadTexture("3D/ayaya.png");
 	GLuint norm_tex = TextureLoader::loadTexture("3D/Road_Normals.png");
+	Model RoadModel(glm::vec3(0.0f, 0.0f, 0.0f));
+	RoadModel.loadObject("3D/plane.obj");
+	RoadModel.setupBuffers();
 
 	carModel.setTexture(texture);
 	ghostCarModel1.setTexture(texture);
 	ghostCarModel2.setTexture(texture);
+
+	RoadModel.setTexture(texture); //willmake new textures 
+	RoadModel.rotate('y', 90);
+	RoadModel.rotate('x', 90);
+	RoadModel.setScale(10, 100,1);
+	RoadModel.translate(0, -0.5f, -100.f);
+
+
+
 
 	auto identity_matrix = glm::mat4(1.0f);
 
@@ -129,6 +155,8 @@ int main(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	Camera camera(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 1.0f, 0.0f), -90.0f, 0.0f);
+
+	stopTimer.timeStart();
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -184,16 +212,39 @@ int main(void)
 
 		currentSkybox->render(skyboxShaderProg, renderer.getViewMatrix(), projectionMatrix);
 
+		
+		// Print car position
+
+		
+
 		carShader.setVec3("viewPos", cameraPos);
 
 		// Player Car
-		carModel.translate(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z);
-		carModel.rotate('x', InputHandler::theta_mod_x);
-		carModel.rotate('y', InputHandler::theta_mod_y);
-		carModel.rotate('z', InputHandler::theta_mod_z);
+	
+			carModel.translate(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z);
+			carModel.rotate('x', InputHandler::theta_mod_x);
+			carModel.rotate('y', InputHandler::theta_mod_y);
+			carModel.rotate('z', InputHandler::theta_mod_z);
+		
 		carModel.setScale(0.1f, 0.1f, 0.1f);
 		carModel.setAlpha(1.0f); // Set alpha value for transparency
 
+		if (carModel.getPosition().z<= -4000.f)// its negative since we are going from the back 45180 =carposz 
+		{
+			std::cout << "Car 1 finished!" << std::endl;
+			
+			
+
+
+				
+				stopTimer.timeStop();
+				car1TimeRecord = stopTimer.getElapsedTime();
+				fingoal = carModel.getPosition().z;
+				car1Finished = true;
+
+			
+		}
+		
 		renderer.renderModel(shaderProg,
 		                     carModel.getVAO(),
 		                     carModel.getVertexData(),
@@ -201,6 +252,15 @@ int main(void)
 		                     carModel.getScale(),
 		                     glm::vec3(InputHandler::theta_mod_x, InputHandler::theta_mod_y, InputHandler::theta_mod_z),
 		                     carModel.getAlpha());
+
+		// Road
+
+		
+	
+		
+		renderer.renderModel(shaderProg, RoadModel.getVAO(), RoadModel.getVertexData(),
+			RoadModel.getPosition(), RoadModel.getScale(), RoadModel.getRotation(),
+			RoadModel.getAlpha());
 
 		/*// Ghost Car 1
 		ghostCarModel1.translate	(-0.5, -0.5, 0);
@@ -226,17 +286,14 @@ int main(void)
 		                     ghostCarModel2.getPosition(), ghostCarModel2.getScale(), ghostCarModel2.getRotation(),
 		                     ghostCarModel2.getAlpha());*/
 
-
-		// Print car position
 		
-		if (carModel.getPosition().z < -100.0f)// its negative since we are going from the back
-		{
-			std::cout << "REEEEEEEEEEEEEEEEEEEEEEEE";
-		}
-
+	std:cout << "\m car pos: " << InputHandler::car_pos_z << std::endl;
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+	std::cout << "\nTime taken: " << car1TimeRecord << " seconds\n";
+	std::cout << "\fingoal  taken: " << fingoal << " seconds\n";
+
 
 	glfwTerminate();
 	return 0;
