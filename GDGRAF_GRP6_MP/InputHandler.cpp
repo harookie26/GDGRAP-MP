@@ -85,24 +85,17 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 			if (theta_mod_y > -10.f)
 				theta_mod_y -= 1.f;
 		}
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		{
 			if (speed > 0.0f)
 			{
-				speed -= 0.01f;
-				std::cout << speed << "\n";
+				speed -= 0.1f;
+				
 				car_pos_z -= speed;
-			}
-		}
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		{
-			if (speed > 0.0f)
-			{
-				speed -= 0.01f;
 				std::cout << speed << "\n";
-				car_pos_z += speed;
 			}
 		}
+	
 		if (key == GLFW_KEY_Z && action == GLFW_PRESS)
 		{
 			useFrontCamera = !useFrontCamera;
@@ -126,4 +119,12 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 	{
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
+	if (action == GLFW_RELEASE)
+	{
+		if (key == GLFW_KEY_W || key == GLFW_KEY_S || key == GLFW_KEY_A || key == GLFW_KEY_D)
+		{
+			speed = 0.0f;
+		}
+	}
+	std::cout << car_pos_z<<std::endl;
 }
