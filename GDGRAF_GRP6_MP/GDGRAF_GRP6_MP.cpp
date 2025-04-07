@@ -196,11 +196,14 @@ int main(void)
 
 		renderer.renderModel(shaderProg,
 		                     carModel.getVAO(),
-		                     carModel.getVertexData(), carModel.getPosition(), carModel.getScale(),
-		                     carModel.getRotation(), carModel.getAlpha());
+		                     carModel.getVertexData(),
+		                     glm::vec3(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z),
+		                     carModel.getScale(),
+		                     glm::vec3(InputHandler::theta_mod_x, InputHandler::theta_mod_y, InputHandler::theta_mod_z),
+		                     carModel.getAlpha());
 
 		/*// Ghost Car 1
-		ghostCarModel1.translate(-0.5, -0.5, 0);
+		ghostCarModel1.translate	(-0.5, -0.5, 0);
 		ghostCarModel1.rotate('x', InputHandler::theta_mod_x);
 		ghostCarModel1.rotate('y', InputHandler::theta_mod_y);
 		ghostCarModel1.rotate('z', InputHandler::theta_mod_z);
