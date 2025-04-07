@@ -1,4 +1,4 @@
-#include <glad/glad.h> 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <string>
 #define _USE_MATH_DEFINES
@@ -18,6 +18,7 @@
 #include "TextureLoader.h"
 #include "InputHandler.h"
 #include "Camera.h"
+#include "Model.h"
 
 float brightness = 100.0f;
 
@@ -64,7 +65,7 @@ int main(void)
 
 	window = glfwCreateWindow(windowWidth, windowHeight, "Ram tempo", nullptr, nullptr);
 	if (!window)
-	{ 
+	{
 		glfwTerminate();
 		return -1;
 	}
@@ -80,7 +81,8 @@ int main(void)
 	Shader skyboxShaderProg("Shaders/Skybox.vert", "Shaders/Skybox.frag");
 	Shader carShader("Shaders/Car.vert", "Shaders/Car.frag");
 
-	std::vector<std::string> facesMorningSkybox(morningSkybox, morningSkybox + sizeof(morningSkybox) / sizeof(std::string));
+	std::vector<std::string> facesMorningSkybox(morningSkybox,
+	                                            morningSkybox + sizeof(morningSkybox) / sizeof(std::string));
 	std::vector<std::string> facesNightSkybox(nightSkybox, nightSkybox + sizeof(nightSkybox) / sizeof(std::string));
 
 	Skybox morningSkyboxObj(facesMorningSkybox);
@@ -90,51 +92,35 @@ int main(void)
 
 	Renderer renderer(windowWidth, windowHeight);
 
-	Lighting morningLighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(1.0f, 0.9f, 0.7f), 0.1f, 5.0f, 16.0f, Lighting::LightType::DIRECTIONAL, glm::vec3(lightDirX, lightDirY, lightDirZ)); // Adjusted direction vector
-	Lighting nightLighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(0.2f, 0.2f, 0.6f), 0.1f, 5.0f, 16.0f, Lighting::LightType::DIRECTIONAL, glm::vec3(lightDirX, lightDirY, lightDirZ)); // Adjusted direction vector
+	Lighting morningLighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(1.0f, 0.9f, 0.7f), 0.1f, 5.0f, 16.0f,
+	                         Lighting::LightType::DIRECTIONAL,
+	                         glm::vec3(lightDirX, lightDirY, lightDirZ)); // Adjusted direction vector
+	Lighting nightLighting(glm::vec3(lightX, lightY, lightZ), glm::vec3(0.2f, 0.2f, 0.6f), 0.1f, 5.0f, 16.0f,
+	                       Lighting::LightType::DIRECTIONAL,
+	                       glm::vec3(lightDirX, lightDirY, lightDirZ)); // Adjusted direction vector
 
 	// Add point lights for the cars
 	//Lighting car1Light(car1LightPos, glm::vec3(1.0f, 0, 0), 0.1f, 1.0f, 1.0f, Lighting::LightType::POINT);
 	//car1Light.setAttenuation(1.0f, 1.0f, 1.0f); // Increase these values to make the light very small
 
-	ObjectLoader objectLoader;
-	std::vector<GLfloat> fullVertexData;
-	std::vector<GLuint> mesh_indices;
-	objectLoader.loadObject("3D/Car.obj", fullVertexData, mesh_indices);
+	Model carModel(glm::vec3(0.0f, 0.0f, 0.0f));
+	carModel.loadObject("3D/Car.obj");
+	carModel.setupBuffers();
+
+	Model ghostCarModel1(glm::vec3(-0.5, -0.5, 0));
+	ghostCarModel1.loadObject("3D/Car.obj");
+	ghostCarModel1.setupBuffers();
+
+	Model ghostCarModel2(glm::vec3(00.5, -0.5, 0));
+	ghostCarModel2.loadObject("3D/Car.obj");
+	ghostCarModel2.setupBuffers();
 
 	GLuint texture = TextureLoader::loadTexture("3D/Road.png");
 	GLuint norm_tex = TextureLoader::loadTexture("3D/Road_Normals.png");
 
-	GLuint VAO, VBO, EBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * fullVertexData.size(), fullVertexData.data(), GL_DYNAMIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), static_cast<void*>(nullptr));
-	glEnableVertexAttribArray(0);
-
-	GLintptr normalPtr = 3 * sizeof(float);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)normalPtr);
-	glEnableVertexAttribArray(1);
-
-	GLintptr uvPtr = 6 * sizeof(float);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)uvPtr);
-	glEnableVertexAttribArray(2);
-
-	GLintptr tangentPtr = 8 * sizeof(float);
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)tangentPtr);
-	glEnableVertexAttribArray(3);
-
-	GLintptr bitangentPtr = 11 * sizeof(float);
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)bitangentPtr);
-	glEnableVertexAttribArray(4);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	carModel.setTexture(texture);
+	ghostCarModel1.setTexture(texture);
+	ghostCarModel2.setTexture(texture);
 
 	auto identity_matrix = glm::mat4(1.0f);
 
@@ -153,7 +139,6 @@ int main(void)
 		shaderProg.setVec3("lightDir", glm::vec3(lightDirX, lightDirY, lightDirZ));
 
 		morningLighting.setPosition(glm::vec3(lightX, lightY, lightZ));
-		//renderer.setLight(morningLighting);
 
 		glm::mat4 projectionMatrix = glm::perspective(glm::radians(60.0f), windowWidth / windowHeight, 0.1f, 100.0f);
 
@@ -181,6 +166,10 @@ int main(void)
 
 		renderer.setCamera(cameraPos, front, worldUp);
 
+		// Print camera position
+		std::cout << "Camera position: " << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << std::endl;
+
+
 		// Update current skybox based on currentSkybox
 		if (InputHandler::currentSkybox == 0)
 		{
@@ -195,51 +184,54 @@ int main(void)
 
 		currentSkybox->render(skyboxShaderProg, renderer.getViewMatrix(), projectionMatrix);
 
-		/*// Update car light positions based on car positions
-		car1Light.setPosition(glm::vec3(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z));
-
-		// Set the lights in the renderer
-		renderer.setLight(car1Light);
-
-		carShader.use();
-		// Set point light properties
-		shaderProg.setVec3("pointLights[0].position", car1Light.getPosition());
-		shaderProg.setVec3("pointLights[0].color", car1Light.getColor());
-		shaderProg.setFloat("pointLights[0].ambientStrength", car1Light.getAmbientStrength());
-		shaderProg.setFloat("pointLights[0].specularStrength", car1Light.getSpecularStrength());
-		shaderProg.setFloat("pointLights[0].specularPhong", car1Light.getSpecularPhong());
-		shaderProg.setFloat("pointLights[0].constant", 1.0f);
-		shaderProg.setFloat("pointLights[0].linear", 0.09f);
-		shaderProg.setFloat("pointLights[0].quadratic", 0.032f);*/
-
 		carShader.setVec3("viewPos", cameraPos);
 
+		// Player Car
+		carModel.translate(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z);
+		carModel.rotate('x', InputHandler::theta_mod_x);
+		carModel.rotate('y', InputHandler::theta_mod_y);
+		carModel.rotate('z', InputHandler::theta_mod_z);
+		carModel.setScale(0.1f, 0.1f, 0.1f);
+		carModel.setAlpha(1.0f); // Set alpha value for transparency
 
-		renderer.renderModel(carShader, VAO, fullVertexData, glm::vec3(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z), glm::vec3(0.1f), glm::vec3(InputHandler::theta_mod_x, InputHandler::theta_mod_y, InputHandler::theta_mod_z), 1.0f);
+		renderer.renderModel(shaderProg,
+		                     carModel.getVAO(),
+		                     carModel.getVertexData(), carModel.getPosition(), carModel.getScale(),
+		                     carModel.getRotation(), carModel.getAlpha());
+
+		/*// Ghost Car 1
+		ghostCarModel1.translate(-0.5, -0.5, 0);
+		ghostCarModel1.rotate('x', InputHandler::theta_mod_x);
+		ghostCarModel1.rotate('y', InputHandler::theta_mod_y);
+		ghostCarModel1.rotate('z', InputHandler::theta_mod_z);
+		ghostCarModel1.setScale(0.1f, 0.1f, 0.1f);
+		ghostCarModel1.setAlpha(0.5f); // Set alpha value for transparency
+
+		renderer.renderModel(shaderProg, ghostCarModel1.getVAO(), ghostCarModel1.getVertexData(),
+		                     ghostCarModel1.getPosition(), ghostCarModel1.getScale(), ghostCarModel1.getRotation(),
+		                     ghostCarModel1.getAlpha());
+
+		// Ghost Car 2
+		ghostCarModel2.translate(0.5, -0.5, 0);
+		ghostCarModel2.rotate('x', InputHandler::theta_mod_x);
+		ghostCarModel2.rotate('y', InputHandler::theta_mod_y);
+		ghostCarModel2.rotate('z', InputHandler::theta_mod_z);
+		ghostCarModel2.setScale(0.1f, 0.1f, 0.1f);
+		ghostCarModel2.setAlpha(0.5f); // Set alpha value for transparency
+
+		renderer.renderModel(shaderProg, ghostCarModel2.getVAO(), ghostCarModel2.getVertexData(),
+		                     ghostCarModel2.getPosition(), ghostCarModel2.getScale(), ghostCarModel2.getRotation(),
+		                     ghostCarModel2.getAlpha());*/
 
 
-		renderer.renderModel(shaderProg, VAO, fullVertexData,
-		                     glm::vec3(InputHandler::car_pos_x, InputHandler::car_pos_y, InputHandler::car_pos_z),
-		                     glm::vec3(0.1f),
-		                     glm::vec3(InputHandler::theta_mod_x, InputHandler::theta_mod_y, InputHandler::theta_mod_z),
-		                     1.0f);
-		renderer.renderModel(shaderProg, VAO, fullVertexData, glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0.1f),
-		                     glm::vec3(InputHandler::theta_mod_x, InputHandler::theta_mod_y, InputHandler::theta_mod_z),
-		                     0.5f);
-		renderer.renderModel(shaderProg, VAO, fullVertexData, glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.1f),
-		                     glm::vec3(InputHandler::theta_mod_x, InputHandler::theta_mod_y, InputHandler::theta_mod_z),
-		                     0.5f);
-		if (-100.00f >= InputHandler::car_pos_z)//||
-		{
-			std::cout << "FINISHED";
-		}
+		// Print car position
+		std::cout << "Car position: " << carModel.getPosition().x << ", " << carModel.getPosition().y << ", " <<
+			carModel.getPosition().z << std::endl;
+
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
 
 	glfwTerminate();
 	return 0;
