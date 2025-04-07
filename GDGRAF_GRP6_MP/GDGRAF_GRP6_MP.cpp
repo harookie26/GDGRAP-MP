@@ -229,7 +229,10 @@ int main(void)
 		renderer.renderModel(shaderProg, VAO, fullVertexData, glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.1f),
 		                     glm::vec3(InputHandler::theta_mod_x, InputHandler::theta_mod_y, InputHandler::theta_mod_z),
 		                     0.5f);
-
+		if (-100.00f >= InputHandler::car_pos_z)//||
+		{
+			std::cout << "FINISHED";
+		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
