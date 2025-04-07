@@ -1,11 +1,23 @@
 #pragma once
 #include <chrono>
-using namespace std::chrono;
+using namespace std;
 class Timer
 {
 
 private:
-	typedef steady_clock cClock;
-	typedef cClock::time_point ;
+	typedef chrono::steady_clock cClock;
+	typedef chrono::time_point<cClock> tPoints;
+
+	tPoints STime;
+	tPoints ETime;
+	bool isRunning;
+
+public:
+	Timer();
+	void timeStart();
+	void timeStop();
+	double getElapsedTime();
+	void reset();
+
 };
 

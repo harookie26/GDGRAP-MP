@@ -167,7 +167,7 @@ int main(void)
 		renderer.setCamera(cameraPos, front, worldUp);
 
 		// Print camera position
-		std::cout << "Camera position: " << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << std::endl;
+	//	std::cout << "Camera position: " << cameraPos.x << ", " << cameraPos.y << ", " << cameraPos.z << std::endl;
 
 
 		// Update current skybox based on currentSkybox
@@ -225,9 +225,11 @@ int main(void)
 
 
 		// Print car position
-		std::cout << "Car position: " << carModel.getPosition().x << ", " << carModel.getPosition().y << ", " <<
-			carModel.getPosition().z << std::endl;
-
+		
+		if (carModel.getPosition().z < -100.0f)// its negative since we are going from the back
+		{
+			std::cout << "REEEEEEEEEEEEEEEEEEEEEEEE";
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

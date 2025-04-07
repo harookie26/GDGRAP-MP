@@ -92,7 +92,7 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 				speed -= 0.1f;
 				
 				car_pos_z -= speed;
-				std::cout << speed << "\n";
+				
 			}
 		}
 	
@@ -114,7 +114,10 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 			currentSkybox = 1; // Night skybox
 			currentLightingMode = 1; // Night lighting
 		}
+		std::cout << speed << "\n";
 	}
+	
+	
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 	{
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -126,5 +129,4 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 			speed = 0.0f;
 		}
 	}
-	std::cout << car_pos_z<<std::endl;
 }
